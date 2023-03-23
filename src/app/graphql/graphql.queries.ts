@@ -21,7 +21,20 @@ const addToList = gql`
     }
   }
 `;
-
+const addItem = gql`
+  mutation addItem($name: String!, $id:ID!) {
+    createItem(data: {name: $name, quantity: 1, completed: false, list: {connect: {id: $id}}}) {
+      id
+    }
+  }
+`;
+const publishItem = gql`
+mutation publishItem($id: ID!) {
+    publishItem(where: {id: $id}) {
+        id
+    }
+  }
+`;
 const publishList = gql`
 mutation publishList($id: ID!) {
     publishList(where: {id: $id}) {
@@ -36,10 +49,11 @@ const getItems = gql`
         name
         id
         quantity
+        completed
         list {
           title
         }
       }
   }
 `;
-export { getLists, addToList, publishList, getItems };
+export { getLists, addToList, publishList, getItems, addItem, publishItem };

@@ -3,7 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 import { List } from 'src/types/list';
 import { ListItem } from 'src/types/listItem';
 import { Apollo } from 'apollo-angular';
-import { getItems } from '../graphql/graphql.queries';
+import { addItem, getItems, publishItem } from '../graphql/graphql.queries';
 
 @Component({
   selector: 'app-list-detail',
@@ -28,36 +28,63 @@ export class ListDetailComponent implements OnInit {
     item.completed = !item.completed;
     console.log(item)
   }
-
-  getItems(): void {
+  getItems(id: string): void {
     this.apollo.query({
       query: getItems,
       variables: {
-        id: this.ListId,
+        id: id,
       }
     })
     .subscribe(
       {
-        next: (data: any) => console.log(data),
+        next: (data: any) => this.items = data.data.items,
         error: (e) => console.error(e),
         complete: () => console.info('complete') 
     }
     )
     
   }
+  additemtoList(value: string): void {
+    this.apollo
+      .mutate({
+        mutation: addItem,
+        variables: {
+          name: value,
+          id: this.ListId
+        },
+      })
+      .subscribe({
+        next: (res: any) =>  this.apollo
+        .mutate({
+          mutation: publishItem,
+          variables: {
+            id: res.data.createItem.id,
+          }
+        }).subscribe(
+          {
+            next: (data: any) => this.getItems(this.ListId!),
+            error: (e) => console.error(e),
+            complete: () => console.info('complete')
+          }),
+        error: (e) => console.error(e),
+          complete: () => console.info('complete'),
+        
+          
+  }); 
+  }
+  
   ngOnInit(): void {
     this.apollo.watchQuery({
       query: getItems,
-      
-        variables: {
-          id: this.ListId,
-        }
-      
-    }).valueChanges.subscribe(({ data, error }: any) => {
-      this.items = data.items;
-      this.ListName = data.items[0].list.title
-      console.log(error);
-  }
+      variables: {
+        id: this.ListId,
+      }
+    }).valueChanges.subscribe(
+      {
+        next: (data: any) => {this.items= data.data.items; this.ListName = data.data.items[0].list.title},
+        error: (e) => console.error(e),
+        complete: () => console.info('complete')
+      }
   );
 
   }

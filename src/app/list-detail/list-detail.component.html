@@ -8,7 +8,7 @@
         </div>
         <h1>{{ListName}}</h1>
         <div id="filter">
-            <button (click)="getItems()">all </button>
+            <button>all </button>
             <button >completed</button>
             <button >uncompleted</button>
         </div>
@@ -27,6 +27,6 @@
 
             </li>
         </ul>
-        <input placeholder="New shopping list">
-        <button type="button" >Create new list</button>
+        <input #name type="text" (keyup.enter)="additemtoList(name.value); name.value=''" placeholder="New shopping list">
+        <button type="button" (click)="additemtoList(name.value); name.value=''">Create new list</button>
     </div>
