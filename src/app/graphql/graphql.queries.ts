@@ -56,4 +56,78 @@ const getItems = gql`
       }
   }
 `;
-export { getLists, addToList, publishList, getItems, addItem, publishItem };
+
+
+const deleteList = gql`
+mutation deleteList($id: ID!) {
+  deleteList(where: {id: $id}) {
+   id
+  }
+}
+`;
+
+const deleteItemByListId = gql`
+mutation deletelistitem($id: ID!) {
+  deleteManyItems(where: {list: {id: $id}}) {
+  	count
+  }
+}
+`;
+
+const deleteItem = gql`
+mutation deleteitem($id: ID!) {
+  deleteItem(where: {id: $id}){
+    id
+  }
+}
+`;
+
+const updateItemCompleted = gql`mutation updateItemCompleted($id:ID!, $completed: Boolean!) {
+  updateItem(data: {completed: $completed}, where: {id: $id}){
+		id
+  }
+}`
+const updateItemQuantity = gql`mutation updateItemIncrease($id:ID!, $quantity: Int!) {
+  updateItem(data: {quantity: $quantity}, where: {id: $id}){
+		id
+  }
+}`
+
+const getFilteredItemsCom = gql`
+  query ($id: ID!) {
+    items(where: {list: {id: $id}, completed: true}) {
+        name
+        id
+        quantity
+        completed
+        list {
+          title
+        }
+      }
+  }
+`;
+const getFilteredItemsUnCom = gql`
+  query ($id: ID!) {
+    items(where: {list: {id: $id}, completed: false}) {
+        name
+        id
+        quantity
+        completed
+        list {
+          title
+        }
+      }
+  }
+`;
+
+const getListName = gql`
+
+  query($id: ID!) {
+    lists (where: {id: $id} ){
+      title
+    }
+  }
+`;
+
+
+export { getListName, getFilteredItemsCom, getFilteredItemsUnCom, getLists, addToList, publishList, getItems, addItem, publishItem, deleteList, deleteItemByListId, deleteItem,updateItemCompleted, updateItemQuantity };

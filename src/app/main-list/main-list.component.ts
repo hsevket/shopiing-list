@@ -2,7 +2,8 @@ import { Component, Input, OnInit } from '@angular/core';
 
 import { List } from 'src/types/list';
 import { Apollo } from 'apollo-angular';
-import { getLists, addToList, publishList } from '../graphql/graphql.queries';
+import { getLists, addToList, publishList, deleteList, deleteItemByListId } from '../graphql/graphql.queries';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-main-list',
@@ -13,10 +14,27 @@ export class MainListComponent implements OnInit {
   lists: List[] = [];
   list?: List;
   id: string = '';
-
+  private querySubscription?: Subscription;
   constructor(private apollo: Apollo) {}
 
+  deleteList(id?: string): void{
+    console.log('this is item id' + id)
+    this.apollo.mutate({
+      mutation: deleteItemByListId,
+      variables: {
+        id: id,
+      },
+    }).subscribe(({ data, error }: any) => {
+      this.apollo.mutate({
+        mutation: deleteList,
+        variables: {
+          id: id,
+        },}).subscribe(({ data, error }: any) => {console.log(data + "    item deleted" )})
+      console.log(error);
+  })
+  };
   addMainList(value: string): void {
+    if(value !== ''){
     this.apollo
       .mutate({
         mutation: addToList,
@@ -44,7 +62,9 @@ export class MainListComponent implements OnInit {
           complete: () => console.info('complete'),
         
           
-  }); 
+  }); }else{
+    alert("Name of the List shouldn't be empty")
+  }
   }
 
   getList(): void {
@@ -61,12 +81,16 @@ export class MainListComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.apollo.watchQuery({
-      query: getLists
+    this.querySubscription = this.apollo.watchQuery({
+      query: getLists,
+      pollInterval: 500,
     }).valueChanges.subscribe(({ data, error }: any) => {
       this.lists = data.lists;
       console.log(error);
   }
   );
+  }
+  ngOnDestroy() {
+    this.querySubscription!.unsubscribe();
   }
 }

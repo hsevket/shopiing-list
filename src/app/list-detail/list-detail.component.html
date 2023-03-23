@@ -8,9 +8,9 @@
         </div>
         <h1>{{ListName}}</h1>
         <div id="filter">
-            <button>all </button>
-            <button >completed</button>
-            <button >uncompleted</button>
+            <button (click)="getItems(0); filter = 0">all </button>
+            <button (click)="getItems(1); filter = 1">completed</button>
+            <button (click)="getItems(-1); filter = -1">uncompleted</button>
         </div>
         <ul>
             <li *ngFor='let item of items'>
@@ -19,14 +19,14 @@
                     <span>{{item.name}}</span>
                 </div>
                 <div class="bttncont">
-                    <button >-</button>
+                    <button (click)="decreaseQuantity(item.id, item.quantity)">-</button>
                     <input [value]="item.quantity" type="number">
-                    <button >+</button>
-                    <button >X</button>
+                    <button (click)="increaseQuantity(item.id, item.quantity)" >+</button>
+                    <button (click)="deleteItem(item.id)">X</button>
                 </div>
 
             </li>
         </ul>
-        <input #name type="text" (keyup.enter)="additemtoList(name.value); name.value=''" placeholder="New shopping list">
-        <button type="button" (click)="additemtoList(name.value); name.value=''">Create new list</button>
+        <input #name type="text" (keyup.enter)="additemtoList(name.value); name.value=''" placeholder='New Item' >
+        <button type="button" (click)="additemtoList(name.value); name.value=''">Create new item</button>
     </div>

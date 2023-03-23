@@ -8,6 +8,7 @@ import{HttpClientModule} from '@angular/common/http';
 import { MainListComponent } from './main-list/main-list.component';
 import { ListDetailComponent } from './list-detail/list-detail.component';
 import { GraphQLModule } from './graphql.module';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
 @NgModule({
   declarations: [
@@ -20,7 +21,9 @@ import { GraphQLModule } from './graphql.module';
     BrowserModule,
     AppRoutingModule,
     HttpClientModule,
-    GraphQLModule
+    GraphQLModule,
+    ReactiveFormsModule,
+    FormsModule
   ],
   providers: [],
   bootstrap: [AppComponent]

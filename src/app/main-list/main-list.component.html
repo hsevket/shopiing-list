@@ -7,7 +7,7 @@
         <span>{{item.title}}</span>
         </div>
         
-        <button #del id='del'>X</button>
+        <button #del id='del' (click)="deleteList(item.id)">X</button>
         </li> 
     </ul>
     <input #name type="text" (keyup.enter)="addMainList(name.value); name.value=''" placeholder="New shopping list">

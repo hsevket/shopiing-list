@@ -3,7 +3,8 @@ import { ActivatedRoute } from '@angular/router';
 import { List } from 'src/types/list';
 import { ListItem } from 'src/types/listItem';
 import { Apollo } from 'apollo-angular';
-import { addItem, getItems, publishItem } from '../graphql/graphql.queries';
+import { addItem, deleteItem, getFilteredItemsCom, getFilteredItemsUnCom, getItems, getListName, publishItem, updateItemCompleted, updateItemQuantity } from '../graphql/graphql.queries';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-list-detail',
@@ -13,9 +14,10 @@ import { addItem, getItems, publishItem } from '../graphql/graphql.queries';
 export class ListDetailComponent implements OnInit {
   items: ListItem[] = [];
   item?: ListItem;
+  filter: number = 0;
   ListName?: string;
   ListId: string | null = this.route.snapshot.paramMap.get('id');
-
+  private querySubscription?: Subscription;
 
   constructor(
    
@@ -23,16 +25,95 @@ export class ListDetailComponent implements OnInit {
     private apollo: Apollo) { }
 
 
-
-  eventCheck(item: ListItem) {
-    item.completed = !item.completed;
-    console.log(item)
+deleteItem(id?: string): void{
+  this.apollo.mutate({
+    mutation: deleteItem,
+    variables:{
+      id:id
+    }
+  })
+  .subscribe(
+    {
+      next: (data: any) => console.log(data),
+      error: (e) => console.error(e),
+      complete: () => console.info('complete') 
   }
-  getItems(id: string): void {
-    this.apollo.query({
-      query: getItems,
-      variables: {
+  )
+}
+
+decreaseQuantity(id?: string, value?: number){
+  if(value !== undefined){
+  this.apollo.mutate({
+    mutation: updateItemQuantity,
+    variables:{
+      id: id,
+      quantity: value -1
+    }
+  })
+  .subscribe(
+    {
+      next: (data: any) => this.apollo.client.mutate({
+        mutation: publishItem,
+        variables:{
+          id: data.data.updateItem.id
+        }
+      }),
+      error: (e) => console.error(e),
+      complete: () => console.info('complete') 
+  }
+  )}
+}
+
+  increaseQuantity(id?: string, value?: number){
+    if(value !== undefined){
+    this.apollo.mutate({
+      mutation: updateItemQuantity,
+      variables:{
         id: id,
+        quantity: value +1
+      }
+    })
+    .subscribe(
+      {
+        next: (data: any) => this.apollo.client.mutate({
+          mutation: publishItem,
+          variables:{
+            id: data.data.updateItem.id
+          }
+        }),
+        error: (e) => console.error(e),
+        complete: () => console.info('complete') 
+    }
+    )}
+  }
+  eventCheck(item: ListItem) {
+  
+    this.apollo.mutate({
+      mutation: updateItemCompleted,
+      variables: {
+        id: item.id,
+        completed: !item.completed
+      }
+    })
+    .subscribe(
+      {
+        next: (data: any) => this.apollo.client.mutate({
+          mutation: publishItem,
+          variables:{
+            id: data.data.updateItem.id
+          }
+        }),
+        error: (e) => console.error(e),
+        complete: () => console.info('complete') 
+    }
+    )
+  }
+
+  getItems(filter: number): void {
+    this.apollo.query({
+      query: filter === 0? getItems: filter> 0? getFilteredItemsCom: getFilteredItemsUnCom,
+      variables: {
+        id: this.ListId,
       }
     })
     .subscribe(
@@ -44,7 +125,11 @@ export class ListDetailComponent implements OnInit {
     )
     
   }
+  
   additemtoList(value: string): void {
+    if(value !== ''){
+
+    
     this.apollo
       .mutate({
         mutation: addItem,
@@ -62,30 +147,48 @@ export class ListDetailComponent implements OnInit {
           }
         }).subscribe(
           {
-            next: (data: any) => this.getItems(this.ListId!),
+            next: (data: any) => console.log(data),
             error: (e) => console.error(e),
             complete: () => console.info('complete')
           }),
         error: (e) => console.error(e),
           complete: () => console.info('complete'),
-        
-          
-  }); 
+  }); }else{
+    alert("Name of item shouldn't be empty")
   }
-  
-  ngOnInit(): void {
-    this.apollo.watchQuery({
-      query: getItems,
-      variables: {
-        id: this.ListId,
+  }
+  getListName(id:string | null){
+    if(id !== null){
+    this.apollo.query({
+      query: getListName,
+      variables:{
+        id:id
       }
-    }).valueChanges.subscribe(
+    }).subscribe(
       {
-        next: (data: any) => {this.items= data.data.items; this.ListName = data.data.items[0].list.title},
+        next: (data: any) => {this.ListName = data.data.lists[0].title},
         error: (e) => console.error(e),
         complete: () => console.info('complete')
       }
+    )}
+  }
+  ngOnInit(): void {
+    this.getListName(this.route.snapshot.paramMap.get('id'));
+    this.querySubscription =  this.apollo.watchQuery({
+      query: this.filter === 0?getItems: this.filter>0? getFilteredItemsCom: getFilteredItemsUnCom,
+      pollInterval: 500,
+      variables: {
+        id: this.ListId,
+      },
+    }).valueChanges.subscribe(
+      ({ data, error }: any) => {
+        this.items = data.items;
+        console.log(error);
+    }
   );
 
+  }
+  ngOnDestroy() {
+    this.querySubscription!.unsubscribe();
   }
 }
